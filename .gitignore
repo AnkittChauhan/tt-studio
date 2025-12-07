@@ -33,7 +33,6 @@ unzipped_tti/
 db.sqlite3
 
 # secrets
-.env
 
 # unignore
 !requirements.txt
