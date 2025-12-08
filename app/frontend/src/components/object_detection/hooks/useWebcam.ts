@@ -29,7 +29,27 @@ export const useWebcam = (
     import("../utils/webcamUtils").then(({ enumerateCameras }) => {
       enumerateCameras().then(setCameras);
     });
+
+    const handleDeviceChange = async () => {
+      const { enumerateCameras } = await import("../utils/webcamUtils");
+      const devices = await enumerateCameras();
+      setCameras(devices);
+    };
+
+    navigator.mediaDevices.addEventListener("devicechange", handleDeviceChange);
+    return () => {
+      navigator.mediaDevices.removeEventListener("devicechange", handleDeviceChange);
+    };
   }, []);
+
+  // Hot-switching: Restart capture if ID changes while active
+  useEffect(() => {
+    if (isCapturing && selectedDeviceId) {
+      // We need to stop current stream and start new one
+      stopCapture(videoRef);
+      handleStartCapture(); // Will use new selectedDeviceId
+    }
+  }, [selectedDeviceId]);
 
   const processFrame = useCallback(async () => {
     if (!isLiveRef.current || processingRef.current || !videoRef.current)

@@ -138,28 +138,29 @@ const WebcamPicker: React.FC<WebcamPickerProps> = ({
 
   return (
     <div className="w-full space-y-4">
+      {cameras.length > 0 && (
+        <div className="flex bg-white dark:bg-neutral-900 z-50 relative p-2 rounded-md justify-center w-full max-w-sm mx-auto">
+          <Select
+            value={selectedDeviceId}
+            onValueChange={setSelectedDeviceId}
+          // disabled={isCapturing} // Enable switching while capturing
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select Camera" />
+            </SelectTrigger>
+            <SelectContent>
+              {cameras.map((camera) => (
+                <SelectItem key={camera.deviceId} value={camera.deviceId}>
+                  {camera.label || `Camera ${camera.deviceId.slice(0, 5)}...`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       {!isCapturing ? (
         <div className="space-y-4">
-          {cameras.length > 0 && (
-            <div className="flex bg-white dark:bg-neutral-900 z-50 relative p-2 rounded-md justify-center w-full max-w-sm mx-auto">
-              <Select
-                value={selectedDeviceId}
-                onValueChange={setSelectedDeviceId}
-                disabled={isCapturing}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select Camera" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cameras.map((camera) => (
-                    <SelectItem key={camera.deviceId} value={camera.deviceId}>
-                      {camera.label || `Camera ${camera.deviceId.slice(0, 5)}...`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
 
           <motion.div
             onClick={handleStartCapture}
