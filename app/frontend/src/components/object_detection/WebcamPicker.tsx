@@ -2,6 +2,13 @@
 // SPDX-FileCopyrightText: © 2025 Tenstorrent AI ULC
 import React, { useLayoutEffect, useEffect, useState } from "react";
 import { Button } from "../ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { useWebcam } from "./hooks/useWebcam";
 import { WebcamPickerProps } from "./types/objectDetection";
 import { Video } from "lucide-react";
@@ -30,11 +37,10 @@ function GridPattern() {
           return (
             <div
               key={`${col}-${row}`}
-              className={`w-10 h-10 flex shrink-0 rounded-[2px] ${
-                index % 2 === 0
-                  ? "bg-gray-50 dark:bg-neutral-950"
-                  : "bg-gray-50 dark:bg-neutral-950 shadow-[0px_0px_1px_3px_rgba(255,255,255,1)_inset] dark:shadow-[0px_0px_1px_3px_rgba(0,0,0,1)_inset]"
-              }`}
+              className={`w-10 h-10 flex shrink-0 rounded-[2px] ${index % 2 === 0
+                ? "bg-gray-50 dark:bg-neutral-950"
+                : "bg-gray-50 dark:bg-neutral-950 shadow-[0px_0px_1px_3px_rgba(255,255,255,1)_inset] dark:shadow-[0px_0px_1px_3px_rgba(0,0,0,1)_inset]"
+                }`}
             />
           );
         })
@@ -52,15 +58,22 @@ const WebcamPicker: React.FC<WebcamPickerProps> = ({
   modelID,
   setExternalControls,
 }) => {
-  const { isCapturing, handleStartCapture, handleStopCapture, videoRef } =
-    useWebcam(
-      setDetections,
-      setLiveMode,
-      setIsLoading,
-      setIsStreaming,
-      setIsCameraOn,
-      modelID ?? ""
-    );
+  const {
+    isCapturing,
+    handleStartCapture,
+    handleStopCapture,
+    videoRef,
+    cameras,
+    selectedDeviceId,
+    setSelectedDeviceId
+  } = useWebcam(
+    setDetections,
+    setLiveMode,
+    setIsLoading,
+    setIsStreaming,
+    setIsCameraOn,
+    modelID ?? ""
+  );
 
   // Add a state to track if the component is mounted/visible
   const [isMounted, setIsMounted] = useState(true);
@@ -126,41 +139,64 @@ const WebcamPicker: React.FC<WebcamPickerProps> = ({
   return (
     <div className="w-full space-y-4">
       {!isCapturing ? (
-        <motion.div
-          onClick={handleStartCapture}
-          whileHover="animate"
-          className="p-10 group/file block rounded-lg cursor-pointer w-full relative overflow-hidden"
-        >
-          <div className="absolute inset-0 mask-[radial-gradient(ellipse_at_center,white,transparent)]">
-            <GridPattern />
-          </div>
-          <div className="flex flex-col items-center justify-center">
-            <p className="relative z-20 font-sans font-bold text-neutral-700 dark:text-neutral-300 text-base">
-              Start Webcam
-            </p>
-            <p className="relative z-20 font-sans font-normal text-neutral-400 dark:text-neutral-400 text-base mt-2">
-              Click to activate your camera for object detection
-            </p>
-            <div className="relative w-full mt-10 max-w-xl mx-auto space-y-4 p-4">
-              <motion.div
-                layoutId="webcam-icon"
-                variants={mainVariant}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className={cn(
-                  "relative group-hover/file:shadow-2xl z-40 bg-white dark:bg-neutral-900 flex items-center justify-center h-32 w-full max-w-[8rem] mx-auto rounded-md",
-                  "shadow-[0px_10px_50px_rgba(0,0,0,0.1)]"
-                )}
+        <div className="space-y-4">
+          {cameras.length > 0 && (
+            <div className="flex bg-white dark:bg-neutral-900 z-50 relative p-2 rounded-md justify-center w-full max-w-sm mx-auto">
+              <Select
+                value={selectedDeviceId}
+                onValueChange={setSelectedDeviceId}
+                disabled={isCapturing}
               >
-                <Video className="h-6 w-6 text-neutral-600 dark:text-neutral-300" />
-              </motion.div>
-
-              <motion.div
-                variants={secondaryVariant}
-                className="absolute opacity-0 border border-dashed border-TT-purple-accent inset-0 z-30 bg-transparent flex items-center justify-center h-32 w-full max-w-[8rem] mx-auto rounded-md"
-              />
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Camera" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cameras.map((camera) => (
+                    <SelectItem key={camera.deviceId} value={camera.deviceId}>
+                      {camera.label || `Camera ${camera.deviceId.slice(0, 5)}...`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </div>
-        </motion.div>
+          )}
+
+          <motion.div
+            onClick={handleStartCapture}
+            whileHover="animate"
+            className="p-10 group/file block rounded-lg cursor-pointer w-full relative overflow-hidden"
+          >
+            <div className="absolute inset-0 mask-[radial-gradient(ellipse_at_center,white,transparent)]">
+              <GridPattern />
+            </div>
+            <div className="flex flex-col items-center justify-center">
+              <p className="relative z-20 font-sans font-bold text-neutral-700 dark:text-neutral-300 text-base">
+                Start Webcam
+              </p>
+              <p className="relative z-20 font-sans font-normal text-neutral-400 dark:text-neutral-400 text-base mt-2">
+                Click to activate your camera for object detection
+              </p>
+              <div className="relative w-full mt-10 max-w-xl mx-auto space-y-4 p-4">
+                <motion.div
+                  layoutId="webcam-icon"
+                  variants={mainVariant}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  className={cn(
+                    "relative group-hover/file:shadow-2xl z-40 bg-white dark:bg-neutral-900 flex items-center justify-center h-32 w-full max-w-[8rem] mx-auto rounded-md",
+                    "shadow-[0px_10px_50px_rgba(0,0,0,0.1)]"
+                  )}
+                >
+                  <Video className="h-6 w-6 text-neutral-600 dark:text-neutral-300" />
+                </motion.div>
+
+                <motion.div
+                  variants={secondaryVariant}
+                  className="absolute opacity-0 border border-dashed border-TT-purple-accent inset-0 z-30 bg-transparent flex items-center justify-center h-32 w-full max-w-[8rem] mx-auto rounded-md"
+                />
+              </div>
+            </div>
+          </motion.div>
+        </div>
       ) : (
         <>
           {/* Stop button always visible above video */}

@@ -11,11 +11,16 @@ export const startCapture = (
     boxes: Detection[];
     metadata: DetectionMetadata;
   }) => void,
-  setIsLoading: (isLoading: boolean) => void
+  setIsLoading: (isLoading: boolean) => void,
+  deviceId?: string
 ) => {
   return new Promise<void>((resolve, reject) => {
+    const constraints = {
+      video: deviceId ? { deviceId: { exact: deviceId } } : true,
+    };
+
     navigator.mediaDevices
-      .getUserMedia({ video: true })
+      .getUserMedia(constraints)
       .then((stream) => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -35,6 +40,16 @@ export const startCapture = (
         reject(error);
       });
   });
+};
+
+export const enumerateCameras = async (): Promise<MediaDeviceInfo[]> => {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    return devices.filter((device) => device.kind === "videoinput");
+  } catch (error) {
+    console.error("Error enumerating devices:", error);
+    return [];
+  }
 };
 
 export const sendSnapshot = async (

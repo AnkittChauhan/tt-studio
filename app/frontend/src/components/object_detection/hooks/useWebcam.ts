@@ -21,6 +21,16 @@ export const useWebcam = (
   const processingRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
+
+  useEffect(() => {
+    // Note: Labels might be empty if permissions aren't granted yet.
+    import("../utils/webcamUtils").then(({ enumerateCameras }) => {
+      enumerateCameras().then(setCameras);
+    });
+  }, []);
+
   const processFrame = useCallback(async () => {
     if (!isLiveRef.current || processingRef.current || !videoRef.current)
       return;
@@ -47,9 +57,15 @@ export const useWebcam = (
     isLiveRef.current = true;
 
     try {
-      await startCapture(videoRef, setDetections, setIsLoading);
+      await startCapture(videoRef, setDetections, setIsLoading, selectedDeviceId);
       setIsLoading(false);
       processFrame();
+
+      // Refresh camera list after permission is granted to ensure we have labels
+      const { enumerateCameras } = await import("../utils/webcamUtils");
+      const devices = await enumerateCameras();
+      setCameras(devices);
+
     } catch (error) {
       console.error("Error accessing webcam:", error);
       setIsLoading(false);
@@ -62,6 +78,7 @@ export const useWebcam = (
     setIsStreaming,
     setIsCameraOn,
     processFrame,
+    selectedDeviceId
   ]);
 
   const handleStopCapture = useCallback(() => {
@@ -89,5 +106,13 @@ export const useWebcam = (
     };
   }, [handleStopCapture]);
 
-  return { isCapturing, handleStartCapture, handleStopCapture, videoRef };
+  return {
+    isCapturing,
+    handleStartCapture,
+    handleStopCapture,
+    videoRef,
+    cameras,
+    selectedDeviceId,
+    setSelectedDeviceId
+  };
 };
