@@ -83,7 +83,14 @@ export const useWebcam = (
 
       // Refresh camera list after permission is granted to ensure we have labels
       const { enumerateCameras } = await import("../utils/webcamUtils");
-      const devices = await enumerateCameras();
+      let devices = await enumerateCameras();
+
+      // Retry if empty (common on some mobile devices immediately after permission)
+      if (devices.length === 0) {
+        await new Promise(r => setTimeout(r, 500));
+        devices = await enumerateCameras();
+      }
+
       setCameras(devices);
 
     } catch (error) {
